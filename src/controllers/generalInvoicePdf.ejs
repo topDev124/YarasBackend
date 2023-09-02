@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik&family=Saira+Extra+Condensed&display=swap"
+        rel="stylesheet">
+    <style>
+        html,
+        body {
+            margin: 0px;
+            -webkit-print-color-adjust: exact;
+        }
+
+        * {
+            font-family: Rubik, sans-serif;
+        }
+
+        p {
+            margin-top: 0px;
+            margin-bottom: 0px;
+            color: #151520;
+            font-size: 18px;
+        }
+
+        .text-dark {
+            color: #000 !important;
+        }
+
+        .text-bold {
+            font-weight: 700;
+        }
+
+        .mt-0 {
+            margin-top: 0px;
+        }
+
+        .mb-0 {
+            margin-bottom: 0px;
+        }
+
+        .mb-1 {
+            margin-bottom: .5rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 1rem;
+        }
+
+        .container {
+            padding: 30px 40px;
+            position: relative;
+            width: 855.6px;
+            height: 1210.2px;
+            box-sizing: border-box;
+
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .header>.logo {
+            height: 50px;
+            width: auto;
+        }
+
+        .invoice-content {
+            padding-top: 10px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between
+        }
+
+        .invoice-content>div:nth-child(2) {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            text-align: right;
+        }
+
+        .invoice-content .qrcode {
+            border: 1px solid #ccc;
+        }
+
+        .billing-content {
+            margin-bottom: 2rem;
+        }
+
+        .online-pay-link {
+            color: #6256F9;
+            font-weight: 700;
+        }
+
+        .description-table {
+            margin: 2rem auto;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .description-table thead {
+            border-bottom: 1px solid #cccccc;
+        }
+
+        .description-table thead th:first-child {
+            font-size: 18px;
+        }
+
+        .description-table tbody td {
+            padding-top: .6rem;
+            padding-bottom: .6rem;
+            border-bottom: 1px solid #cccccc;
+        }
+
+        .description-table tbody td:last-child {
+            text-align: right;
+        }
+
+        .admin-note {
+            background: #FBFBFB;
+            padding: 1.0rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .system-note {
+            background: #FEF8EC;
+            padding: 1.0rem;
+            margin-bottom: 2rem;
+            border: 4px solid #ffe3b5;
+        }
+
+        .payment-detail-content {
+            background: #FEF8EC;
+            padding: 1.0rem;
+            display: inline-block;
+            border: 4px solid #ffe3b5;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 100%;
+            padding-left: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{logoUrl}}" class="logo" />
+            <div>
+                <p>{{companyName}}</p>
+                <p>{{companyAddress}}</p>
+                <p>{{companyPhone}}</p>
+                <p>{{companyEmail}}</p>
+            </div>
+        </div>
+        <div class="content">
+            <div class="invoice-content">
+                <div>
+                    <div>
+                        <p>Invoice number: {{invoiceNo}}</p>
+                        <p>Date of Issue: {{issuedDate}}</p>
+                        <p>Date due: {{dueDate}}</p>
+                    </div>
+                    <div class="billing-content">
+                        <h3 class="mb-0">Billed to</h3>
+                        <p>{{clientName}}</p>
+                        <p>{{clientAddress}}</p>
+                        <p>{{clientPhone}}</p>
+                        <p>{{clientEmail}}</p>
+                    </div>
+                </div>
+                {{#if isPaid}}
+                <div>
+                    <img src="{{qrcodeUrl}}" class="qrcode mb-1" height="97" />
+                    {{#if isPartial}}
+                    <div>
+                        <img src={{partialPaidIconUrl}} class="mb-0" height="35" />
+                        <p>{{paidDate}}</p>
+                        <p>Amount paid: £{{paidAmount}}</p>
+                        <p>Remaining: £{{remainingAmount}}</p>
+                    </div>
+                    {{else}}
+                    <div>
+                        <img src="{{paidIconUrl}}" class="mb-0" height="35" />
+                        <p>{{paidDate}}</p>
+                    </div>
+                    {{/if}}
+                </div>
+                {{/if}}
+            </div>
+            <h3 class="mb-1">£{{totalAmount}} due {{dueDate}}</h3>
+            <a href="{{onlinePayLink}}" class="online-pay-link">Pay online</a>
+
+            <table class="description-table">
+                <thead>
+                    <tr>
+                        <th colspan="3" align="left">Description</th>
+                        <th>Quantity</th>
+                        <th>Unit price</th>
+                        <th align="right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each descriptions}}
+                    <tr>
+                        <td colspan="3">{{content}}</td>
+                        <td align="center">{{quantity}}</td>
+                        <td align="center">£{{unitPrice}}</td>
+                        <td>£{{multiply quantity unitPrice}}</td>
+                    </tr>
+                    {{/each}}
+                    <tr>
+                        <td rowspan="2" colspan="4" style="width: 60%; border-bottom: none"></td>
+                        <td>Total</td>
+                        <td>£{{totalAmount}}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 800">Amount Due</td>
+                        <td>£{{totalAmount}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            {{#if note}}
+            <div class="admin-note">
+                {{note}}
+            </div>
+            {{/if}}
+            <div class="system-note">
+                Kindly note that if you are doing bank transfer then please ensure that you include the invoice number
+            </div>
+            {{#if bankAccountName}}
+            <div class="payment-detail-container">
+                <h4 class="mb-1">Account Details:</h4>
+                <div class="payment-detail-content">
+                    <p>Name: {{bankAccountName}}</p>
+                    <p>Account Number: {{bankAccountNo}}</p>
+                    <p>Sort Code: {{bankAccountSortCode}}</p>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+        <div class="footer">
+            <p>{{companyName}}</p>
+        </div>
+    </div>
+</body>
+
+</html>

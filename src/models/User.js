@@ -1,6 +1,6 @@
 // Require Mongoose
 const mongoose = require("mongoose");
-
+const bcrypt = require("bcryptjs")
 // Define a schema
 const Schema = mongoose.Schema;
 
@@ -19,20 +19,6 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    userRole: {
-        type: String,
-        enum: ['Customer', 'Rider', 'Restaurant'],
-        default: 'Customer'
-    },
-    userLanguage: {
-        type: String,
-        enum: ['English', 'Arabic', 'French'],
-        default: 'English'
-    },
-    userStatus: {
-        type: Boolean,
-        default: false
-    }
 }, {
     timestamps: true
 });

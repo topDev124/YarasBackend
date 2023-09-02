@@ -1,3 +1,5 @@
+const jwt = require("jsonwebtoken");
+
 function notFound(req, res, next) {
   res.status(404);
   const error = new Error(`🔍 - Not Found - ${req.originalUrl}`);
@@ -15,7 +17,28 @@ function errorHandler(err, req, res, next) {
   });
 }
 
+const checkAuth = (req, res, next) => {
+  const authorization = req.headers['authorization'];
+  const token = authorization && authorization.split(' ')[1];
+  if (!token) {
+    return res.status(419).json({
+      status: false
+    });
+  } else {
+    jwt.verify(token, process.env.TOKEN_KEY, (err, user) => {
+      if (err || !user) {
+        return res.status(419).json({
+          status: false
+        })
+      }
+      req.user = user;
+      next();
+    })    
+  }
+}
+
 module.exports = {
   notFound,
-  errorHandler
+  errorHandler,
+  checkAuth,
 };
