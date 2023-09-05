@@ -25,13 +25,33 @@ const InvoiceManagementSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    smsScheduleStatus: {
+        type: Boolean,
+        required: false
+    },
+    smsScheduleDate: {
+        type: Date,
+        required: false
+    },
     clientEmail: {
         type: String,
         required: true,
         match: /.+\@.+\..+/
     },
+    emailScheduleStatus: {
+        type: Boolean,
+        required: false
+    },
+    emailScheduleDate: {
+        type: Date,
+        required: false
+    },
     description: {
         type: Array,
+        required: false
+    },
+    showQuantity: {
+        type: Boolean,
         required: false
     },
     note: {

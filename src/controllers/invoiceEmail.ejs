@@ -98,7 +98,9 @@
                 <thead>
                     <tr>
                         <th colspan="3" align="left">Description</th>
+                        {{#if showQuantity}}
                         <th>Quantity</th>
+                        {{/if}}
                         <th>Unit price</th>
                         <th align="right">Amount</th>
                     </tr>
@@ -107,7 +109,9 @@
                     {{#each descriptions}}
                     <tr>
                         <td colspan="3">{{content}}</td>
+                        {{#if showQuantity}}
                         <td>{{quantity}}</td>
+                        {{/if}}
                         <td>£{{unitPrice}}</td>
                         <td>£{{multiply quantity unitPrice}}</td>
                     </tr>
@@ -117,6 +121,7 @@
 
             <p>Due Date: {{dueDate}}</p>
             <p class="mb-1">Amount Due: £{{totalAmount}}</p>
+            <p class="mb-1">Note: {{note}}</p>
             <p class="mb-2">Kindly note that if you are doing bank transfer then please ensure that you include the
                 invoice number.</p>
             <p>Best regards</p>

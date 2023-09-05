@@ -11,7 +11,7 @@ const InvoiceCompanySchema = mongoose.Schema({
     },
     companyName: {
         type: String,
-        required: true
+        required: true,
     },
     companyAddr: {
         type: String,
@@ -20,8 +20,7 @@ const InvoiceCompanySchema = mongoose.Schema({
     companyEmail: {
         type: String,
         required: true,
-        match: /.+\@.+\..+/,
-        unique: true
+        match: /.+\@.+\..+/
     },
     companyPhone: {
         type: String,

@@ -44,7 +44,6 @@ const createBank = async (req, res) => {
 const updateBank = async (req, res) => {
 let bankData = req.body
 const { id } = req.params
-console.log("===========>", id, bankData)
   try {
     let bank = await InvoiceBank.findByIdAndUpdate(id, bankData)
     res.json({

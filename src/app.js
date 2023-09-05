@@ -11,15 +11,15 @@ const { emailSchedule, smsSchedule } = require('./services/schedule')
 
 const app = express()
 
-// cron.schedule('* * * */7 * *', () => {
-//     console.log('================ Sending Email every 7 days ================');
-//     emailSchedule();
-// });
+cron.schedule('0 0 */1 * * *', () => {
+    console.log('================ Sending Email every 7 days ================');
+    emailSchedule();
+});
 
-// cron.schedule('* * * */7 * *', () => {
-//     console.log('============= Sending Sms every 7 days =================');
-//     smsSchedule();
-// })
+cron.schedule('0 0 */1 * * *', () => {
+    console.log('============= Sending Sms every 7 days =================');
+    smsSchedule();
+})
 
 app.use(morgan('dev'))
 app.use(cors())

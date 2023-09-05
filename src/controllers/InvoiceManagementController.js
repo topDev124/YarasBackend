@@ -1,4 +1,5 @@
 const InvoiceManagement = require('../models/InvoiceManagement')
+const History = require('../models/History')
 const Setting = require('../models/Setting')
 const sgMail = require('@sendgrid/mail')
 var htmlToPdf = require('html-pdf-node')
@@ -14,11 +15,40 @@ handlebars.registerHelper('multiply', function (a, b) {
 
 const getAll = async (req, res) => {
   try {
-    let allInvoice = await InvoiceManagement.find()
+    let allInvoice = await InvoiceManagement.find().populate([
+      'companyId',
+      'bankId'
+    ])
+    let newArray = allInvoice.filter(function (el) {
+      return el?.companyId.status === true && el?.bankId.status === true
+    })
     if (allInvoice) {
       res.json({
         success: true,
-        data: allInvoice
+        data: newArray
+      })
+    }
+  } catch (err) {
+    res.json({
+      success: false,
+      msg: err.message
+    })
+  }
+}
+
+const getAllDeleted = async (req, res) => {
+  try {
+    let allInvoice = await InvoiceManagement.find().populate([
+      'companyId',
+      'bankId'
+    ])
+    let newArray = allInvoice.filter(function (el) {
+      return el?.companyId?.status === false || el?.bankId?.status === false
+    })
+    if (allInvoice) {
+      res.json({
+        success: true,
+        data: newArray
       })
     }
   } catch (err) {
@@ -37,14 +67,14 @@ const getAllPending = async (req, res) => {
       dueDate: {
         $gt: currentDate
       }
-    }).populate([
-      'companyId',
-      'bankId'
-    ])
+    }).populate(['companyId', 'bankId'])
+    let newArray = allInvoice.filter(function (el) {
+      return el?.companyId?.status === true && el?.bankId?.status === true
+    })
     if (allInvoice) {
       res.json({
         success: true,
-        data: allInvoice
+        data: newArray
       })
     }
   } catch (err) {
@@ -66,14 +96,14 @@ const getAllPaid = async (req, res) => {
           status: 'Partial Paid'
         }
       ]
-    }).populate([
-      'companyId',
-      'bankId'
-    ])
+    }).populate(['companyId', 'bankId'])
+    let newArray = allInvoice.filter(function (el) {
+      return el?.companyId?.status === true && el?.bankId?.status === true
+    })
     if (allInvoice) {
       res.json({
         success: true,
-        data: allInvoice
+        data: newArray
       })
     }
   } catch (err) {
@@ -92,14 +122,14 @@ const getAllOverdue = async (req, res) => {
       dueDate: {
         $lt: currentDate
       }
-    }).populate([
-      'companyId',
-      'bankId'
-    ])
+    }).populate(['companyId', 'bankId'])
+    let newArray = allInvoice.filter(function (el) {
+      return el?.companyId?.status === true && el?.bankId?.status === true
+    })
     if (allInvoice) {
       res.json({
         success: true,
-        data: allInvoice
+        data: newArray
       })
     }
   } catch (err) {
@@ -149,7 +179,8 @@ const createInvoice = async (req, res) => {
         totalAmount: Number(addInvoice.totalAmount).toFixed(2),
         onlinePayLink: `${req.protocol}://${req.headers.host}/invoice-payment?id=${addInvoice._id}`,
         descriptions: addInvoice.description,
-        note: addInvoice.companyNote,
+        showQuantity: addInvoice.showQuantity,
+        note: addInvoice.note,
         bankAccountName: addInvoice.bankId?.beneficiary,
         bankAccountNo: addInvoice.bankId?.accountNo,
         bankAccountSortCode: addInvoice.bankId?.sortCode
@@ -186,10 +217,39 @@ const searchFilterInvoice = async (req, res) => {
           clientName: { $regex: keyword }
         }
       ]
+    }).populate(['companyId', 'bankId'])
+    let newArray = filterInvoices.filter(function (el) {
+      return el?.companyId?.status === true && el?.bankId?.status === true
     })
     res.json({
       success: true,
-      msg: filterInvoices
+      msg: newArray
+    })
+  } catch (err) {
+    res.json({
+      success: false,
+      msg: err.message
+    })
+  }
+}
+
+const searchFilterDeletedInvoice = async (req, res) => {
+  const { searchInvoice } = req.body
+  let keyword = new RegExp(searchInvoice, 'i')
+  try {
+    let filterInvoices = await InvoiceManagement.find({
+      $or: [
+        {
+          clientName: { $regex: keyword }
+        }
+      ]
+    }).populate(['companyId', 'bankId'])
+    let newArray = filterInvoices.filter(function (el) {
+      return el?.companyId?.status === false || el?.bankId?.status === false
+    })
+    res.json({
+      success: true,
+      msg: newArray
     })
   } catch (err) {
     res.json({
@@ -214,10 +274,13 @@ const searchFilterPending = async (req, res) => {
       dueDate: {
         $gt: currentDate
       }
+    }).populate(['companyId', 'bankId'])
+    let newArray = filterInvoices.filter(function (el) {
+      return el?.companyId?.status === true && el?.bankId?.status === true
     })
     res.json({
       success: true,
-      msg: filterInvoices
+      msg: newArray
     })
   } catch (err) {
     res.json({
@@ -241,10 +304,13 @@ const searchFilterPaid = async (req, res) => {
           status: 'Partial Paid'
         }
       ]
+    }).populate(['companyId', 'bankId'])
+    let newArray = filterInvoices.filter(function (el) {
+      return el?.companyId?.status === true && el?.bankId?.status === true
     })
     res.json({
       success: true,
-      msg: filterInvoices
+      msg: newArray
     })
   } catch (err) {
     res.json({
@@ -272,10 +338,13 @@ const searchFilterOverdue = async (req, res) => {
           status: 'Partial Paid'
         }
       ]
+    }).populate(['companyId', 'bankId'])
+    let newArray = filterInvoices.filter(function (el) {
+      return el?.companyId?.status === true && el?.bankId?.status === true
     })
     res.json({
       success: true,
-      msg: filterInvoices
+      msg: newArray
     })
   } catch (err) {
     res.json({
@@ -351,7 +420,8 @@ const updateInvoice = async (req, res) => {
       totalAmount: Number(addInvoice.totalAmount).toFixed(2),
       onlinePayLink: `${req.protocol}://${req.headers.host}/invoice-payment?id=${addInvoice._id}`,
       descriptions: addInvoice.description,
-      note: addInvoice.companyNote,
+      showQuantity: addInvoice.showQuantity,
+      note: addInvoice.note,
       bankAccountName: addInvoice.bankId?.beneficiary,
       bankAccountNo: addInvoice.bankId?.accountNo,
       bankAccountSortCode: addInvoice.bankId?.sortCode
@@ -395,7 +465,9 @@ const markAsRead = async (req, res) => {
         clientName: addInvoice?.clientName,
         issuedDate: moment(addInvoice.issuedDate).format('DD/MM/YYYY'),
         totalAmount: Number(addInvoice?.totalAmount).toFixed(2),
-        paidAmount: (Number(addInvoice?.paidAmount) + Number(partialPayValue)).toFixed(2),
+        paidAmount: (
+          Number(addInvoice?.paidAmount) + Number(partialPayValue)
+        ).toFixed(2),
         paidDate: moment().format('DD/MM/YYYY'),
         linkToPdf: `${req.protocol}://${req.headers.host}/upload/pdfs/${pdfFileName}`
       }).toString()
@@ -403,7 +475,12 @@ const markAsRead = async (req, res) => {
     let markUpdate = await InvoiceManagement.findByIdAndUpdate(id, {
       status: invoiceStatus,
       paidDate: invoicePaidDate,
-      paidAmount: invoiceStatus === 'Paid' ? addInvoice?.totalAmount : invoiceStatus === 'Pending' ? 0 : Number(addInvoice?.paidAmount) + Number(partialPayValue),
+      paidAmount:
+        invoiceStatus === 'Paid'
+          ? addInvoice?.totalAmount
+          : invoiceStatus === 'Pending'
+          ? 0
+          : Number(addInvoice?.paidAmount) + Number(partialPayValue),
       pdf: pdfFileName,
       qrcode: qrcodeFileName
     })
@@ -429,8 +506,11 @@ const markAsRead = async (req, res) => {
       clientPhone: addInvoice?.clientPhone,
       clientEmail: addInvoice?.clientEmail,
       totalAmount: Number(addInvoice?.totalAmount).toFixed(2),
-      onlinePayLink: `${req.protocol}://${req.headers.host}/invoice-payment?id=${addInvoice?._id.toString()}`,
+      onlinePayLink: `${req.protocol}://${
+        req.headers.host
+      }/invoice-payment?id=${addInvoice?._id.toString()}`,
       descriptions: addInvoice?.description,
+      showQuantity: addInvoice?.showQuantity,
       note: addInvoice?.note,
       bankAccountName: addInvoice?.bankId?.beneficiary,
       bankAccountNo: addInvoice?.bankId?.accountNo,
@@ -473,62 +553,79 @@ const markAsRead = async (req, res) => {
 const sendEmail = async (req, res) => {
   try {
     const { id } = req.params
-    const { email } = req.body
-    const invoice = await InvoiceManagement.findById(id).populate([
-      'companyId',
-      'bankId'
-    ])
-    const logoUrl = invoice?.companyId
-      ? `${req.protocol}://${req.headers.host}/upload/invoices/${invoice?.companyId?.companyLogo}`
-      : `${req.protocol}://${req.headers.host}/upload/invoices/invoice.png`
-    const setting = await Setting.findOne()
-    sgMail.setApiKey(
-      setting !== null && setting.sendGridApiKey !== ''
-        ? setting.sendGridApiKey
-        : process.env.SENDGRID_API_KEY
-    )
-    let attachments = [
-      {
-        content: fs
-          .readFileSync(`upload/pdfs/${invoice.pdf}`)
-          .toString('base64'),
-        type: 'application/pdf',
-        filename: 'invoice.pdf',
-        disposition: 'attachment'
+    const { email, switchStatus, date } = req.body
+    await InvoiceManagement.findByIdAndUpdate(id, {
+      emailScheduleStatus: switchStatus,
+      emailScheduleDate: switchStatus === true ? moment(date).format('DD/MM/YYYY hh:mm') : ''
+    })
+    if (switchStatus === true) {
+      res.json({
+        success: true,
+        msg: 'updated'
+      })
+    } else {
+      const invoice = await InvoiceManagement.findById(id).populate([
+        'companyId',
+        'bankId'
+      ])
+      await History.create({historyTo: invoice?.clientEmail, historyType: 'Email', historyTime: moment(Date.now()).format('DD/MM/YYYY hh:mm')})
+      const logoUrl = invoice?.companyId
+        ? `${req.protocol}://${req.headers.host}/upload/invoices/${invoice?.companyId?.companyLogo}`
+        : `${req.protocol}://${req.headers.host}/upload/invoices/invoice.png`
+      const setting = await Setting.findOne()
+      sgMail.setApiKey(
+        setting !== null && setting.sendGridApiKey !== ''
+          ? setting.sendGridApiKey
+          : process.env.SENDGRID_API_KEY
+      )
+      let attachments = [
+        {
+          content: fs
+            .readFileSync(`upload/pdfs/${invoice.pdf}`)
+            .toString('base64'),
+          type: 'application/pdf',
+          filename: 'invoice.pdf',
+          disposition: 'attachment'
+        }
+      ]
+
+      const invoiceEmailTemplate = fs.readFileSync(
+        path.join(__dirname, './invoiceEmail.ejs'),
+        'utf-8'
+      )
+      const invoiceParams = {
+        logoUrl: logoUrl,
+        clientName: invoice.clientName,
+        invoiceNo: invoice.invoiceNumber,
+        issuedDate: moment(invoice.issuedDate).format('DD/MM/YYYY'),
+        dueDate: moment(invoice.dueDate).format('DD/MM/YYYY'),
+        descriptions: invoice.description,
+        note: invoice.note,
+        showQuantity: invoice?.showQuantity,
+        totalAmount: Number(invoice.totalAmount).toFixed(2),
+        paymentLink: `${req.protocol}://${req.headers.host}/invoice-payment/${invoice._id}`
       }
-    ]
 
-    const invoiceEmailTemplate = fs.readFileSync(
-      path.join(__dirname, './invoiceEmail.ejs'),
-      'utf-8'
-    )
-    const invoiceParams = {
-      logoUrl: logoUrl,
-      clientName: invoice.clientName,
-      invoiceNo: invoice.invoiceNumber,
-      issuedDate: moment(invoice.issuedDate).format('DD/MM/YYYY'),
-      dueDate: moment(invoice.dueDate).format('DD/MM/YYYY'),
-      descriptions: invoice.description,
-      totalAmount: Number(invoice.totalAmount).toFixed(2),
-      paymentLink: `${req.protocol}://${req.headers.host}/invoice-payment/${invoice._id}`
+      const compiledInvoiceEmailTemplate =
+        handlebars.compile(invoiceEmailTemplate)
+      const invoiceEmailHtml = compiledInvoiceEmailTemplate(invoiceParams)
+
+      await sgMail.send({
+        to: email,
+        from:
+          setting !== null && setting.sendGridUser !== ''
+            ? setting.sendGridUser
+            : process.env.SENDGRID_USER,
+        subject: 'Your Invoice is currently pending payment.',
+        html: invoiceEmailHtml,
+        attachments: attachments
+      })
+
+      res.json({
+        status: true,
+        msg: 'Successfully sent.'
+      })
     }
-
-    const compiledInvoiceEmailTemplate =
-      handlebars.compile(invoiceEmailTemplate)
-    const invoiceEmailHtml = compiledInvoiceEmailTemplate(invoiceParams)
-
-    await sgMail.send({
-      to: email,
-      from: setting !== null && setting.sendGridUser !== '' ? setting.sendGridUser : process.env.SENDGRID_USER,
-      subject: 'Your Invoice is currently pending payment.',
-      html: invoiceEmailHtml,
-      attachments: attachments
-    })
-
-    res.json({
-      status: true,
-      msg: 'Successfully sent.'
-    })
   } catch (err) {
     res.json({
       status: false,
@@ -540,51 +637,73 @@ const sendEmail = async (req, res) => {
 const sendSMS = async (req, res) => {
   try {
     const { id } = req.params
-    const { phone } = req.body
-    const invoice = await InvoiceManagement.findById(id).populate([
-      'companyId',
-      'bankId'
-    ])
-    const setting = await Setting.findOne()
-    const TWILIO_API_KEY = setting !== null && setting.twilloApiKey !== '' ? setting.twilloApiKey : process.env.TWILLO_API_KEY
-    const TWILIO_API_SECRET_KEY = setting !== null && setting.twilloApiSecretKey !== '' ? setting.twilloApiSecretKey : process.env.TWILLO_API_SECRET_KEY
-    const TWILIO_PHONE = setting !== null && setting.twilloPhone !== '' ? setting.twilloPhone : process.env.TWILLO_PHONE
-    const twilio = require('twilio')(TWILIO_API_KEY, TWILIO_API_SECRET_KEY)
-    let content = ''
-    content += `Dear ${invoice?.clientName}\r\n\r\n`
-    content += `Kindly find attached the invoice, Please make the payment using the following link.\r\n\r\n`
-    content += `${req.protocol}://${req.headers.host}/invoice-payment?id=${invoice?._id.toString()}\r\n\r\n`
-    content += `Invoice No: #${invoice?.invoiceNumber}\r\n`
-    content += `Invoice Date: ${moment(invoice?.issuedDate).format(
-      'DD/MM/YYYY'
-    )}\r\n`
-    content += `Description:\r\n`
-    for (let description of invoice?.description) {
-      content += `  ${description.content} - £${description.unitPrice}\r\n`
-    }
-    content += `Due Date: ${moment(invoice?.dueDate).format('DD/MM/YYYY')}\r\n`
-    content += `Amount Due: £${invoice?.totalAmount}\r\n\r\n`
-    content += `Kindly note that if you are doing bank transfer then please ensure that you include the invoice number.\r\n\r\n`
-    if (invoice?.bankId?._id) {
-      content += `Bank account details:\r\n`
-      content += `  Beneficiary Name: ${invoice?.bankId?.beneficiary}\r\n`
-      content += `  Account No: ${invoice?.bankId?.accountNo}\r\n`
-      content += `  Sort Code: ${invoice?.bankId?.sortCode}\r\n\r\n`
-    }
-    content += `Best regards\r\n`
-    content += `${invoice?.companyId?.companyName}\r\n\r\n`
-    content += `${req.protocol}://${req.headers.host}/upload/pdfs/${invoice?.pdf}`
-
-    const result = await twilio.messages.create({
-      body: content,
-      from: `+${TWILIO_PHONE}`,
-      to: phone
+    const { phone, switchStatus, date } = req.body
+    await InvoiceManagement.findByIdAndUpdate(id, {
+      smsScheduleStatus: switchStatus,
+      smsScheduleDate: switchStatus === true ? moment(date).format('DD/MM/YYYY hh:mm') : ''
     })
-
-    res.json({
-      status: true,
-      msg: 'Successfully sent.'
-    })
+    if (switchStatus === true) {
+      res.json({
+        success: true,
+        msg: 'updated'
+      })
+    } else {
+      const invoice = await InvoiceManagement.findById(id).populate([
+        'companyId',
+        'bankId'
+      ])
+      const setting = await Setting.findOne()
+      const TWILIO_API_KEY =
+        setting !== null && setting.twilloApiKey !== ''
+          ? setting.twilloApiKey
+          : process.env.TWILLO_API_KEY
+      const TWILIO_API_SECRET_KEY =
+        setting !== null && setting.twilloApiSecretKey !== ''
+          ? setting.twilloApiSecretKey
+          : process.env.TWILLO_API_SECRET_KEY
+      const TWILIO_PHONE =
+        setting !== null && setting.twilloPhone !== ''
+          ? setting.twilloPhone
+          : process.env.TWILLO_PHONE
+      const twilio = require('twilio')(TWILIO_API_KEY, TWILIO_API_SECRET_KEY)
+      let content = ''
+      content += `Dear ${invoice?.clientName}\r\n\r\n`
+      content += `Kindly find attached the invoice, Please make the payment using the following link.\r\n\r\n`
+      content += `${req.protocol}://${
+        req.headers.host
+      }/invoice-payment?id=${invoice?._id.toString()}\r\n\r\n`
+      content += `Invoice No: #${invoice?.invoiceNumber}\r\n`
+      content += `Invoice Date: ${moment(invoice?.issuedDate).format(
+        'DD/MM/YYYY'
+      )}\r\n`
+      content += `Description:\r\n`
+      for (let description of invoice?.description) {
+        content += `  ${description.content} - £${description.unitPrice}\r\n`
+      }
+      content += `Due Date: ${moment(invoice?.dueDate).format('DD/MM/YYYY')}\r\n`
+      content += `Amount Due: £${invoice?.totalAmount}\r\n\r\n`
+      content += `Kindly note that if you are doing bank transfer then please ensure that you include the invoice number.\r\n\r\n`
+      if (invoice?.bankId?._id) {
+        content += `Bank account details:\r\n`
+        content += `  Beneficiary Name: ${invoice?.bankId?.beneficiary}\r\n`
+        content += `  Account No: ${invoice?.bankId?.accountNo}\r\n`
+        content += `  Sort Code: ${invoice?.bankId?.sortCode}\r\n\r\n`
+      }
+      content += `Best regards\r\n`
+      content += `${invoice?.companyId?.companyName}\r\n\r\n`
+      content += `${req.protocol}://${req.headers.host}/upload/pdfs/${invoice?.pdf}`
+  
+      const result = await twilio.messages.create({
+        body: content,
+        from: `+${TWILIO_PHONE}`,
+        to: phone
+      })
+  
+      res.json({
+        status: true,
+        msg: 'Successfully sent.'
+      })
+    }
   } catch (err) {
     res.json({
       status: false,
@@ -595,25 +714,30 @@ const sendSMS = async (req, res) => {
 
 const createPaymentIntent = async (req, res) => {
   try {
-    const { id } = req.params;
-    const invoice = await InvoiceManagement.findById(id).populate('bankId');
-    const amount = (Number(invoice.totalAmount) - Number(invoice.paidAmount)) * 100;
+    const { id } = req.params
+    const invoice = await InvoiceManagement.findById(id).populate('bankId')
+    const amount =
+      (Number(invoice.totalAmount) - Number(invoice.paidAmount)) * 100
     console.log(amount)
-    const currency = invoice.bankId ? invoice.bankId.currency : 'USD' 
+    const currency = invoice.bankId ? invoice.bankId.currency : 'USD'
     const setting = await Setting.findOne()
-    const stripe = require('stripe')(setting.stripeSecretKey ? setting.stripeSecretKey : process.env.STRIPE_SECRET_KEY)
+    const stripe = require('stripe')(
+      setting.stripeSecretKey
+        ? setting.stripeSecretKey
+        : process.env.STRIPE_SECRET_KEY
+    )
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
       currency: currency,
-      automatic_payment_methods: {enabled: true}
+      automatic_payment_methods: { enabled: true }
     })
-    console.log("Intet", paymentIntent.client_secret)
-    console.log("payment Intent==========>", paymentIntent);
+    console.log('Intet', paymentIntent.client_secret)
+    console.log('payment Intent==========>', paymentIntent)
     res.json({
       status: true,
       invoice: invoice,
       clientSecret: paymentIntent.client_secret
-    });
+    })
   } catch (err) {
     res.json({
       status: false,
@@ -638,5 +762,7 @@ module.exports = {
   getAllOverdue,
   searchFilterPaid,
   searchFilterOverdue,
-  createPaymentIntent
+  createPaymentIntent,
+  getAllDeleted,
+  searchFilterDeletedInvoice
 }

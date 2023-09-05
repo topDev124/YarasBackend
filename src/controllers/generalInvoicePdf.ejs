@@ -203,7 +203,9 @@
                 <thead>
                     <tr>
                         <th colspan="3" align="left">Description</th>
+                        {{#if showQuantity}}
                         <th>Quantity</th>
+                        {{/if}}
                         <th>Unit price</th>
                         <th align="right">Amount</th>
                     </tr>
@@ -212,13 +214,15 @@
                     {{#each descriptions}}
                     <tr>
                         <td colspan="3">{{content}}</td>
-                        <td align="center">{{quantity}}</td>
+                        {{#if showQuantity}}
+                            <td align="center">{{quantity}}</td>
+                        {{/if}}
                         <td align="center">£{{unitPrice}}</td>
                         <td>£{{multiply quantity unitPrice}}</td>
                     </tr>
                     {{/each}}
                     <tr>
-                        <td rowspan="2" colspan="4" style="width: 60%; border-bottom: none"></td>
+                        <td rowspan="2" colspan="3" style="width: 60%; border-bottom: none"></td>
                         <td>Total</td>
                         <td>£{{totalAmount}}</td>
                     </tr>
@@ -230,7 +234,7 @@
             </table>
             {{#if note}}
             <div class="admin-note">
-                {{note}}
+                Note: {{note}}
             </div>
             {{/if}}
             <div class="system-note">
